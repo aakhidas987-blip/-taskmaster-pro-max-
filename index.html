@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TaskMaster Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:rgba(255,255,255,.72);--ink:#16203a;--mut:#5d6985;--line:rgba(22,32,58,.12);--ac:#5b5bf0;--ok:#16a34a;--bad:#dc2626;--warn:#d97706;--info:#2563eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1224;--card:rgba(30,38,68,.7);--ink:#e8ecfa;--mut:#9aa6c8;--line:rgba(255,255,255,.12)}}
+:root[data-theme=dark]{--bg:#0d1224;--card:rgba(30,38,68,.7);--ink:#e8ecfa;--mut:#9aa6c8;--line:rgba(255,255,255,.12)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink);background:radial-gradient(1200px 600px at 10% -10%,color-mix(in srgb,var(--ac) 25%,transparent),transparent),var(--bg);transition:background .3s,color .3s}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.app{display:flex;height:100%}
+aside{width:250px;padding:14px;overflow:auto;border-right:1px solid var(--line);background:var(--card);backdrop-filter:blur(18px);flex-shrink:0;transition:width .2s}
+aside.c{width:66px}aside.c .lb,aside.c h6,aside.c .cnt{display:none}
+aside h6{margin:16px 8px 6px;color:var(--mut);font-size:12px;font-weight:600}
+.nav{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:none;border-radius:12px;text-align:left}
+.nav:hover{background:var(--line)}.nav.on{background:var(--ac);color:#fff}
+.cnt{margin-left:auto;font-size:12px;background:var(--line);border-radius:99px;padding:0 8px}
+.nav.on .cnt{background:rgba(255,255,255,.25)}
+main{flex:1;overflow:auto;padding:18px;min-width:0}
+header.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+header.top h1{margin:0;font-size:22px;flex:1;min-width:160px}
+.card{background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 8px 28px rgba(10,20,50,.08)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-bottom:14px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.big{font-size:26px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 14px}
+.btn.p{background:var(--ac);color:#fff;border-color:transparent}.btn.d{color:var(--bad)}
+input,select,textarea{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;width:100%}
+.task{display:flex;gap:10px;align-items:flex-start;padding:12px;margin-bottom:8px}
+.task.sel{outline:2px solid var(--ac)}.task.done .tt{text-decoration:line-through;opacity:.6}
+.tt{font-weight:600}.bd{display:inline-block;font-size:11px;border-radius:99px;padding:1px 8px;margin:2px 4px 0 0;background:var(--line)}
+.High{background:#dc262622;color:var(--bad)}.Medium{background:#d9770622;color:var(--warn)}.Low{background:#2563eb22;color:var(--info)}
+.od{background:#dc262622;color:var(--bad)}.ck{width:22px;height:22px;accent-color:var(--ok);margin-top:2px}
+.bar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);transition:width .4s}
+.cols{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.col{min-height:160px}.col.over{outline:2px dashed var(--ac)}
+.empty{text-align:center;padding:40px 10px;color:var(--mut)}.empty b{display:block;font-size:34px}
+.modal{position:fixed;inset:0;background:rgba(5,10,30,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:12px}
+.modal.on{display:flex}.modal>.card{width:min(620px,100%);max-height:92vh;overflow:auto;background:var(--bg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.row>*{flex:1;min-width:130px}
+#toasts{position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:99;display:grid;gap:8px}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;animation:in .25s;border-left:5px solid var(--info)}
+.toast.success{border-color:var(--ok)}.toast.error{border-color:var(--bad)}.toast.warning{border-color:var(--warn)}
+@keyframes in{from{transform:translateX(30px);opacity:0}}
+.fab{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--ac);color:#fff;font-size:28px;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:30}
+.bnav{display:none}
+@media(max-width:800px){aside{position:fixed;z-index:40;height:100%;left:-270px;transition:left .2s}aside.open{left:0}
+.bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:30;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bnav button{flex:1;border:0;background:none;padding:10px 0;font-size:12px}main{padding-bottom:90px}.modal>.card{max-height:100vh;height:100%;border-radius:0}}
+.ring{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;margin:10px auto}
+.ring div{width:156px;height:156px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:38px;font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal .d{min-height:74px;padding:4px;border-radius:10px;border:1px solid var(--line);font-size:12px;overflow:hidden}
+.cal .d.over{outline:2px dashed var(--ac)}.cal .ev{display:block;font-size:11px;background:var(--ac);color:#fff;border-radius:6px;padding:0 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pal input{margin-bottom:8px}.pi{display:block;width:100%;text-align:left;border:0;background:none;padding:8px;border-radius:8px}.pi:hover,.pi.on{background:var(--line)}
+.off{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head>
+<body>
+<div id="toasts" aria-live="polite"></div>
+<div id="auth" class="modal on"><div class="card" id="authBox"></div></div>
+<div class="app" id="app" hidden>
+<aside id="side" aria-label="Sidebar"></aside>
+<main id="main"></main></div>
+<nav class="bnav" id="bnav"></nav>
+<button class="fab" id="fab" aria-label="Quick add task">+</button>
+<div id="tm" class="modal"><div class="card" id="tmBox"></div></div>
+<div id="pal" class="modal"><div class="card"><input id="pq" placeholder="Type a command…" aria-label="Command palette"><div id="pl"></div></div></div>
+
+<script>
+/* ===== Firebase config placeholders (paste your real values; auth is NOT faked locally) ===== */
+const firebaseConfig={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",projectId:"YOUR_PROJECT_ID",storageBucket:"YOUR_PROJECT.appspot.com",messagingSenderId:"YOUR_SENDER_ID",appId:"YOUR_APP_ID"};
+const FB_READY=!firebaseConfig.apiKey.startsWith("YOUR_");
+/* Wire-up point: load firebase-app/auth/firestore compat scripts, call firebase.initializeApp(firebaseConfig),
+   then replace Auth.* below with firebase.auth() calls and saveState() with Firestore writes. */
+
+const $=s=>document.querySelector(s),uid=()=>Math.random().toString(36).slice(2,10);
+const DAY=864e5,ymd=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const today=()=>ymd(Date.now()),addD=(s,n)=>ymd(new Date(s+'T12:00').getTime()+n*DAY);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CATS=['Work','Personal','Study','Fitness','Shopping'],PRI=['High','Medium','Low'],STAT=['Pending','In Progress','Completed','Waiting','Cancelled','Archived'];
+const ACH=[['first','First step','Complete 1 task',s=>done(s).length>=1],['ten','Getting going','Complete 10 tasks',s=>done(s).length>=10],['focus','Deep focus','Finish a focus session',s=>s.sessions.length>=1],['streak3','On a roll','3-day streak',s=>s.streak>=3],['lvl3','Level 3','Reach level 3',s=>lvl(s.xp)>=3],['habit','Habit builder','Create a habit',s=>s.habits.length>=1]];
+const done=s=>s.tasks.filter(t=>t.status==='Completed');
+const lvl=x=>Math.floor(Math.sqrt(x/100))+1,lvlBase=l=>(l-1)**2*100;
+
+/* ===== State ===== */
+let state=null,view='dashboard',lv='list',filter={q:'',f:'all',sort:'due',cat:'',proj:''},sel=new Set(),cur=null,edit=null;
+const fresh=()=>({user:null,tasks:[],projects:[{id:'p1',name:'Work Projects',color:'#2563eb'},{id:'p2',name:'Personal',color:'#16a34a'}],habits:[],notifications:[],achievements:[],xp:0,level:1,streak:0,lastDay:null,sessions:[],templates:[],settings:{theme:'system',accent:'#5b5bf0',sound:true},savedFilters:[],activity:[]});
+function saveState(){try{localStorage.setItem('tmp_state',JSON.stringify(state))}catch(e){}}
+function loadState(){try{state={...fresh(),...JSON.parse(localStorage.getItem('tmp_state')||'{}')}}catch(e){state=fresh()}}
+/* Never store passwords. Only the profile returned by the auth provider is kept. */
+
+/* ===== Toasts / audio / XP ===== */
+function toast(m,t='info'){const e=document.createElement('div');e.className='toast '+t;e.textContent=m;$('#toasts').append(e);setTimeout(()=>e.remove(),3200)}
+let AC;function chime(){if(!state.settings.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();[660,880,1175].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.setValueAtTime(.15,AC.currentTime+i*.09);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+i*.09+.3);o.connect(g).connect(AC.destination);o.start(AC.currentTime+i*.09);o.stop(AC.currentTime+i*.09+.3)})}catch(e){}}
+function party(){if(window.confetti&&!matchMedia('(prefers-reduced-motion:reduce)').matches)confetti({particleCount:90,spread:70,origin:{y:.7}})}
+function addXP(n){const b=lvl(state.xp);state.xp+=n;state.level=lvl(state.xp);if(state.level>b){toast('Level up! You are now level '+state.level,'success');party()}checkAch()}
+function checkAch(){ACH.forEach(a=>{if(!state.achievements.includes(a[0])&&a[3](state)){state.achievements.push(a[0]);toast('Achievement unlocked: '+a[1],'success');notify('Achievement: '+a[1])}})}
+function notify(m){state.notifications.unshift({id:uid(),m,at:Date.now(),read:false})}
+function log(m){state.activity.unshift({m,at:Date.now()});state.activity.length=Math.min(state.activity.length,50)}
+function bumpStreak(){const t=today();if(state.lastDay===t)return;state.streak=state.lastDay===addD(t,-1)?state.streak+1:1;state.lastDay=t}
+
+/* ===== Task helpers ===== */
+const isOver=t=>t.due&&t.status!=='Completed'&&t.status!=='Archived'&&t.status!=='Cancelled'&&(t.due<today());
+const live=t=>!['Completed','Archived','Cancelled'].includes(t.status);
+const newTask=o=>({id:uid(),title:'',description:'',notes:'',category:'Work',project:'',priority:'Medium',status:'Pending',due:'',time:'',created:Date.now(),updated:Date.now(),completed:null,tags:[],assignee:'',subtasks:[],attachments:[],est:0,actual:0,recur:'none',interval:1,reminder:'',starred:false,deps:[],comments:[],history:[],timerStart:null,quad:'',...o});
+function nextDue(t){const d=t.due||today(),n=t.interval||1;if(t.recur==='daily')return addD(d,n);if(t.recur==='weekday'){let x=addD(d,1);while([0,6].includes(new Date(x+'T12:00').getDay()))x=addD(x,1);return x}if(t.recur==='weekly')return addD(d,7*n);if(t.recur==='monthly'){const x=new Date(d+'T12:00');x.setMonth(x.getMonth()+n);return ymd(x)}return ''}
+function completeTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;if(t.status==='Completed'){t.status='Pending';t.completed=null;render();saveState();return}
+ t.status='Completed';t.completed=Date.now();t.updated=Date.now();t.subtasks.forEach(s=>s.done=true);log('Completed "'+t.title+'"');bumpStreak();
+ if(t.recur!=='none'){const n=newTask({...t,id:uid(),status:'Pending',completed:null,due:nextDue(t),subtasks:t.subtasks.map(s=>({...s,done:false})),comments:[],history:[]});state.tasks.push(n);toast('Next occurrence: '+n.due)}
+ addXP(50);chime();party();toast('Task completed! +50 XP','success');saveState();render()}
+function deleteTask(id){const t=state.tasks.find(x=>x.id===id);if(!t||!confirm('Delete "'+t.title+'"?'))return;state.tasks=state.tasks.filter(x=>x.id!==id);sel.delete(id);log('Deleted "'+t.title+'"');saveState();render();toast('Task deleted','warning')}
+function duplicateTask(id){const t=state.tasks.find(x=>x.id===id);if(!t)return;state.tasks.push(newTask({...t,id:uid(),title:t.title+' (copy)',status:'Pending',completed:null,created:Date.now(),subtasks:t.subtasks.map(s=>({...s,id:uid()}))}));saveState();render();toast('Task duplicated','success')}
+function archiveTask(id){const t=state.tasks.find(x=>x.id===id);t.status='Archived';saveState();render();toast('Task archived')}
+function restoreTask(id){const t=state.tasks.find(x=>x.id===id);t.status='Pending';t.completed=null;saveState();render();toast('Task restored','success')}
+function snooze(id){const t=state.tasks.find(x=>x.id===id);t.due=addD(t.due||today(),1);saveState();render();toast('Snoozed to '+t.due)}
+function toggleTimer(id){const t=state.tasks.find(x=>x.id===id);if(t.timerStart){t.actual+=Math.round((Date.now()-t.timerStart)/60000*10)/10;t.timerStart=null;toast('Timer stopped')}else{t.timerStart=Date.now();toast('Timer started')}saveState();render()}
+
+/* ===== Smart parse ===== */
+function parseNL(s){let txt=s,o={},lo=s.toLowerCase();
+ const cut=r=>{txt=txt.replace(r,'')};
+ if(/\btomorrow\b/.test(lo)){o.due=addD(today(),1);cut(/\btomorrow\b/i)}else if(/\btoday\b/.test(lo)){o.due=today();cut(/\btoday\b/i)}else if(/\bnext week\b/.test(lo)){o.due=addD(today(),7);cut(/\bnext week\b/i)}
+ else{const days=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];days.forEach((d,i)=>{if(new RegExp('\\b'+d+'\\b').test(lo)){const n=(i-new Date().getDay()+7)%7||7;o.due=addD(today(),n);cut(new RegExp('\\b'+d+'\\b','i'))}})}
+ const tm=lo.match(/\b(?:at\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);if(tm){let h=+tm[1]%12+(tm[3]==='pm'?12:0);o.time=String(h).padStart(2,'0')+':'+(tm[2]||'00');txt=txt.replace(/\b(?:at\s*)?\d{1,2}(?::\d{2})?\s*(am|pm)\b/i,'')}
+ else if(/\bmorning\b/.test(lo)){o.time='09:00';cut(/\bmorning\b/i)}else if(/\bafternoon\b/.test(lo)){o.time='14:00';cut(/\bafternoon\b/i)}else if(/\bevening\b/.test(lo)){o.time='19:00';cut(/\bevening\b/i)}
+ const p=lo.match(/\b(high|medium|low)\s*priority\b/);if(p){o.priority=p[1][0].toUpperCase()+p[1].slice(1);cut(/\b(high|medium|low)\s*priority\b/i)}
+ const tags=[...s.matchAll(/#(\w+)/g)].map(m=>m[1]);if(tags.length){o.tags=tags;cut(/#\w+/g)}
+ if(/assignment|homework|exam|study|essay|math|read/.test(lo))o.category='Study';else if(/gym|run|workout|yoga/.test(lo))o.category='Fitness';else if(/buy|shop|groceries/.test(lo))o.category='Shopping';else if(/meeting|report|email|client|project/.test(lo))o.category='Work';
+ o.title=txt.replace(/\s+/g,' ').replace(/\b(at|on|by)\s*$/i,'').trim();return o}
+
+/* ===== Filtering ===== */
+function visible(){let a=state.tasks.slice();const f=filter,T=today();
+ if(view==='today')a=a.filter(t=>t.due===T&&live(t));else if(view==='tomorrow')a=a.filter(t=>t.due===addD(T,1)&&live(t));else if(view==='upcoming')a=a.filter(t=>t.due>T&&live(t));else if(view==='overdue')a=a.filter(isOver);else if(view==='completed')a=a.filter(t=>t.status==='Completed');
+ else if(view.startsWith('proj:'))a=a.filter(t=>t.project===view.slice(5));else if(view==='all'||view==='tasks')a=a.filter(t=>t.status!=='Archived');
+ const F={active:live,completed:t=>t.status==='Completed',today:t=>t.due===T,tomorrow:t=>t.due===addD(T,1),upcoming:t=>t.due>T,overdue:isOver,High:t=>t.priority==='High',Medium:t=>t.priority==='Medium',Low:t=>t.priority==='Low',archived:t=>t.status==='Archived'};
+ if(F[f.f])a=a.filter(F[f.f]);if(f.cat)a=a.filter(t=>t.category===f.cat);if(f.proj)a=a.filter(t=>t.project===f.proj);
+ if(f.q){const q=f.q.toLowerCase();a=a.filter(t=>[t.title,t.description,t.notes,t.category,projName(t.project),...t.tags].join(' ').toLowerCase().includes(q))}
+ const po={High:0,Medium:1,Low:2};a.sort({due:(x,y)=>(x.due||'9')<(y.due||'9')?-1:1,created:(x,y)=>y.created-x.created,updated:(x,y)=>y.updated-x.updated,priority:(x,y)=>po[x.priority]-po[y.priority],alpha:(x,y)=>x.title.localeCompare(y.title),completion:(x,y)=>(x.status==='Completed')-(y.status==='Completed')}[f.sort]);return a}
+const projName=id=>(state.projects.find(p=>p.id===id)||{}).name||'';
+const counts=()=>({upcoming:state.tasks.filter(t=>t.due>today()&&live(t)).length,overdue:state.tasks.filter(isOver).length,completed:done(state).length,notif:state.notifications.filter(n=>!n.read).length});
+
+/* ===== Rendering ===== */
+const NAV=[['WORKSPACE',[['dashboard','📊','Dashboard'],['all','🗂','All Tasks'],['today','☀️','Today'],['tomorrow','🌅','Tomorrow'],['upcoming','📅','Upcoming','upcoming'],['overdue','⚠️','Overdue','overdue'],['completed','✅','Completed','completed'],['calendar','🗓','Calendar'],['board','🧱','Board'],['timeline','⏳','Timeline'],['matrix','🎯','Eisenhower Matrix']]],
+['PRODUCTIVITY & AI',[['habits','🔥','Habit Tracker'],['focus','⏱','Pomodoro Timer'],['coach','✨','AI Focus Coach'],['planner','🧠','AI Daily Planner'],['analytics','📈','Analytics']]],
+['GAMIFICATION',[['achievements','🏆','Achievements & Level']]],
+['MORE',[['templates','📋','Templates'],['automations','⚙️','Automations'],['integrations','🔌','Integrations'],['notifications','🔔','Notifications','notif'],['settings','👤','Account & Settings']]]];
+function renderSide(){const c=counts();let h=`<div style="display:flex;justify-content:space-between;align-items:center"><b class="lb" style="font-size:18px">TaskMaster Pro</b><button class="btn" id="col" aria-label="Collapse sidebar">☰</button></div>`;
+ NAV.forEach(([g,items])=>{h+=`<h6>${g}</h6>`;items.forEach(([k,i,l,c2])=>h+=`<button class="nav ${view===k?'on':''}" data-nav="${k}"><span>${i}</span><span class="lb">${l}</span>${c2?`<span class="cnt">${c[c2]}</span>`:''}</button>`)});
+ h+=`<h6>PROJECTS</h6><button class="nav" id="newProj"><span>＋</span><span class="lb">New</span></button>`;
+ state.projects.forEach(p=>{const n=state.tasks.filter(t=>t.project===p.id).length;h+=`<button class="nav ${view==='proj:'+p.id?'on':''}" data-nav="proj:${p.id}"><span style="color:${p.color}">●</span><span class="lb">${esc(p.name)}</span><span class="cnt">${n}</span></button>`});
+ $('#side').innerHTML=h;
+ $('#bnav').innerHTML=[['dashboard','📊','Home'],['all','🗂','Tasks'],['calendar','🗓','Calendar'],['focus','⏱','Focus'],['menu','☰','More']].map(([k,i,l])=>`<button data-nav="${k}" aria-label="${l}">${i}<br>${l}</button>`).join('')}
+function head(t,extra=''){return `<header class="top"><button class="btn" data-act="menu" aria-label="Open menu" style="display:${innerWidth<=800?'block':'none'}">☰</button><h1>${t}</h1><input id="gs" placeholder="Search ( / )" value="${esc(filter.q)}" style="max-width:220px" aria-label="Search tasks"><button class="btn" data-act="theme" aria-label="Toggle theme">🌓</button><span class="off" id="net"></span>${extra}<button class="btn p" data-act="new">+ New task</button></header>`}
+function taskCard(t){const st=t.subtasks.length?Math.round(t.subtasks.filter(s=>s.done).length/t.subtasks.length*100):null;
+ return `<div class="card task ${t.status==='Completed'?'done':''} ${sel.has(t.id)?'sel':''}" data-id="${t.id}" draggable="true" tabindex="0">
+ <input type="checkbox" class="ck" data-act="sel" ${sel.has(t.id)?'checked':''} aria-label="Select task" style="accent-color:var(--ac)">
+ <input type="checkbox" class="ck" data-act="done" ${t.status==='Completed'?'checked':''} aria-label="Complete ${esc(t.title)}">
+ <div style="flex:1;min-width:0"><div class="tt">${esc(t.title)}</div>${t.description?`<div class="mut">${esc(t.description.slice(0,90))}</div>`:''}
+ <span class="bd ${t.priority}">${t.priority}</span><span class="bd">${t.category}</span>${t.project?`<span class="bd">${esc(projName(t.project))}</span>`:''}${t.due?`<span class="bd ${isOver(t)?'od':''}">${isOver(t)?'Overdue · ':''}${t.due}${t.time?' '+t.time:''}</span>`:''}${t.status!=='Pending'&&t.status!=='Completed'?`<span class="bd">${t.status}</span>`:''}${t.tags.map(x=>`<span class="bd">#${esc(x)}</span>`).join('')}${t.assignee?`<span class="bd">👤 ${esc(t.assignee)}</span>`:''}
+ ${st!==null?`<div class="bar" style="margin-top:6px"><i style="width:${st}%"></i></div><div class="mut">${t.subtasks.filter(s=>s.done).length} / ${t.subtasks.length} subtasks · ${st}%</div>`:''}
+ ${t.est||t.actual?`<div class="mut">Estimated ${t.est} min · Actual ${Math.round(t.actual)} min</div>`:''}</div>
+ <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:150px">
+ <button class="btn" data-act="star" aria-label="Favorite">${t.starred?'⭐':'☆'}</button><button class="btn" data-act="edit" aria-label="Edit">✏️</button>
+ <select data-act="menu2" aria-label="More actions" style="width:54px"><option value="">⋯</option><option value="dup">Duplicate</option>${t.status==='Archived'?'<option value="restore">Restore</option>':'<option value="archive">Archive</option>'}<option value="snooze">Snooze +1 day</option><option value="timer">${t.timerStart?'Stop':'Start'} timer</option><option value="comment">Add comment</option><option value="del">Delete</option></select></div></div>`}
+const EMPTY={today:['☀️','No tasks today'],tomorrow:['🌅','Nothing planned for tomorrow'],upcoming:['📅','No upcoming tasks'],overdue:['🎉',"You're all caught up"],completed:['✅','No completed tasks yet'],all:['🗂','No tasks yet. Add your first one']};
+function empty(i,m,btn=true){return `<div class="empty"><b>${i}</b>${m}${btn?`<div><button class="btn p" data-act="new" style="margin-top:10px">Create a task</button></div>`:''}</div>`}
+function tools(){return `<div class="row card" style="padding:10px"><select id="ff" aria-label="Filter">${['all','active','completed','today','tomorrow','upcoming','overdue','High','Medium','Low','archived'].map(x=>`<option ${filter.f===x?'selected':''}>${x}</option>`).join('')}</select>
+ <select id="fc" aria-label="Category"><option value="">Any category</option>${CATS.map(x=>`<option ${filter.cat===x?'selected':''}>${x}</option>`).join('')}</select>
+ <select id="fp" aria-label="Project"><option value="">Any project</option>${state.projects.map(p=>`<option value="${p.id}" ${filter.proj===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+ <select id="fs" aria-label="Sort">${[['due','Due date'],['created','Date created'],['updated','Updated'],['priority','Priority'],['alpha','Alphabetical'],['completion','Completion']].map(([k,l])=>`<option value="${k}" ${filter.sort===k?'selected':''}>${l}</option>`).join('')}</select>
+ <button class="btn" data-act="clearf">Clear filters</button></div>
+ <div class="row"><button class="btn" data-act="lv" data-v="list">List</button><button class="btn" data-act="lv" data-v="board">Board</button><button class="btn" data-act="selall">Select all</button>
+ ${sel.size?`<span class="mut" style="align-self:center">${sel.size} selected</span><button class="btn" data-act="bulk" data-b="complete">Complete</button><button class="btn" data-act="bulk" data-b="archive">Archive</button><button class="btn" data-act="bulk" data-b="restore">Restore</button><button class="btn d" data-act="bulk" data-b="delete">Delete</button><select data-act="bulkp"><option value="">Priority…</option>${PRI.map(p=>`<option>${p}</option>`).join('')}</select><select data-act="bulkc"><option value="">Category…</option>${CATS.map(p=>`<option>${p}</option>`).join('')}</select><input type="date" data-act="bulkd" aria-label="Bulk due date"><button class="btn" data-act="bulk" data-b="clearsel">Clear selection</button>`:''}</div>`}
+function listView(){const a=visible(),e=EMPTY[view]||EMPTY.all;return tools()+(a.length?a.slice(0,200).map(taskCard).join(''):(state.tasks.length&&(filter.q||filter.f!=='all')?empty('🔍','No tasks match your filters',false):empty(...e)))}
+function boardView(){const a=visible();return tools()+`<div class="cols">`+['Pending','In Progress','Completed'].map(s=>`<div class="col card" data-drop="${s}"><b>${s} (${a.filter(t=>t.status===s).length})</b><div style="margin-top:8px">${a.filter(t=>t.status===s).map(taskCard).join('')||`<div class="mut">Drop tasks here</div>`}</div></div>`).join('')+`</div>`}
+function renderTasks(){$('#main').innerHTML=head(({all:'All Tasks',today:'Today',tomorrow:'Tomorrow',upcoming:'Upcoming',overdue:'Overdue',completed:'Completed'})[view]||projName(view.slice(5))||'Tasks')+(lv==='board'?boardView():listView())}
+function score(){const a=state.tasks.filter(t=>t.status!=='Archived');const d=done(state).length,o=state.tasks.filter(isOver).length;return a.length?Math.max(0,Math.min(100,Math.round(d/a.length*70+Math.min(state.streak,10)*3-o*5+(state.sessions.length?5:0)))):0}
+function renderDashboard(){const T=today(),a=state.tasks,act=a.filter(live),d=done(state).length,tot=a.filter(t=>t.status!=='Archived').length,rate=tot?Math.round(d/tot*100):0,c=counts();
+ const week=[...Array(7)].map((_,i)=>{const dd=addD(T,i-6);return [dd.slice(5),a.filter(t=>t.completed&&ymd(t.completed)===dd).length]}),mx=Math.max(1,...week.map(w=>w[1]));
+ const stat=[['Total',tot],['Pending',act.length],['Completed',d],['Overdue',c.overdue],['Due today',act.filter(t=>t.due===T).length],['High priority',act.filter(t=>t.priority==='High').length],['Completion',rate+'%'],['Productivity',score()],['Streak',state.streak+'🔥'],['XP',state.xp],['Level',state.level]];
+ const hr=new Date().getHours(),g=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening',sm=t=>t.length?t.slice(0,4).map(x=>`<div>• ${esc(x.title)} <span class="mut">${x.due||''}</span></div>`).join(''):'<span class="mut">Nothing here</span>';
+ const base=lvlBase(state.level),nx=lvlBase(state.level+1);
+ $('#main').innerHTML=head(`${g}, ${esc((state.user&&state.user.name)||'there')} <div class="mut" style="font-weight:400" id="clock"></div>`)+
+ `<div class="grid">${stat.map(([l,v])=>`<div class="card"><div class="mut">${l}</div><div class="big">${v}</div></div>`).join('')}</div>
+ <div class="card" style="margin-bottom:12px"><div class="mut">Overall progress · ${rate}%</div><div class="bar"><i style="width:${rate}%"></i></div><div class="mut" style="margin-top:8px">Level ${state.level} · ${state.xp-base} / ${nx-base} XP to next level</div><div class="bar"><i style="width:${(state.xp-base)/(nx-base)*100}%"></i></div></div>
+ <div class="g2"><div class="card"><b>Today's tasks</b>${sm(act.filter(t=>t.due===T))}</div><div class="card"><b>Upcoming</b>${sm(act.filter(t=>t.due>T))}</div><div class="card"><b>Overdue</b>${sm(a.filter(isOver))}</div><div class="card"><b>High priority</b>${sm(act.filter(t=>t.priority==='High'))}</div>
+ <div class="card"><b>Completed per day (7d)</b><div style="display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:8px">${week.map(w=>`<div style="flex:1;text-align:center"><div style="background:var(--ac);border-radius:6px;height:${w[1]/mx*70+3}px"></div><span class="mut" style="font-size:10px">${w[0]}</span></div>`).join('')}</div></div>
+ <div class="card"><b>Focus</b><div class="mut">${state.sessions.length} sessions · ${state.sessions.length*25} min</div><br><b>Habits</b><div class="mut">${state.habits.filter(h=>h.log.includes(T)).length} / ${state.habits.length} done today</div></div>
+ <div class="card"><b>✨ Coach</b><div>${coachTips()[0]}</div></div>
+ <div class="card"><b>Recent activity</b>${state.activity.slice(0,5).map(x=>`<div class="mut">• ${esc(x.m)}</div>`).join('')||'<div class="mut">No activity yet</div>'}</div></div>`;tick()}
+function coachTips(){const T=today(),act=state.tasks.filter(live),o=state.tasks.filter(isOver),hi=act.filter(t=>t.priority==='High'),tips=[];
+ if(!act.length)return ['You have no open tasks. Add one to get started, or plan tomorrow while it is quiet.'];
+ if(o.length)tips.push(`You have ${o.length} overdue task${o.length>1?'s':''}. Start with "${o[0].title}" or reschedule it so it stops weighing on you.`);
+ if(hi.length)tips.push(`Your top priority is "${hi.sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:1)[0].title}". Run one 25-minute focus session on it first.`);
+ const t=act.filter(x=>x.due===T);if(t.length)tips.push(`${t.length} task${t.length>1?'s are':' is'} due today. Finish the quickest one for early momentum.`);
+ if(state.streak>0)tips.push(`You're on a ${state.streak}-day streak. Complete one task today to keep it going.`);else tips.push('Complete any task today to start a streak.');
+ if(score()<40)tips.push('Your productivity score is low. Break big tasks into subtasks so progress is visible.');return tips}
+function planDay(){const T=today(),po={High:0,Medium:1,Low:2};const a=state.tasks.filter(t=>live(t)&&(!t.due||t.due<=T)).sort((x,y)=>po[x.priority]-po[y.priority]||(x.due||'9').localeCompare(y.due||'9'));let m=9*60;return a.slice(0,8).map(t=>{const d=t.est||30,s=m;m+=d+10;const f=x=>String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');return `<div class="card task"><b>${f(s)}–${f(s+d)}</b><div>${esc(t.title)} <span class="bd ${t.priority}">${t.priority}</span></div></div>`}).join('')||empty('🧠','Nothing to plan today',false)}
+function renderCalendar(){const now=new Date(cur?.m||Date.now());const y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate();let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<b class="mut">${d}</b>`).join('');
+ for(let i=0;i<first;i++)h+='<div></div>';for(let d=1;d<=n;d++){const ds=ymd(new Date(y,m,d));h+=`<div class="d" data-date="${ds}"><b>${d}</b>${state.tasks.filter(t=>t.due===ds&&t.status!=='Archived').slice(0,3).map(t=>`<span class="ev" draggable="true" data-id="${t.id}">${esc(t.title)}</span>`).join('')}</div>`}
+ $('#main').innerHTML=head('Calendar')+`<div class="row"><button class="btn" data-act="mo" data-n="-1">‹ Prev</button><b style="align-self:center;text-align:center">${now.toLocaleString('default',{month:'long',year:'numeric'})}</b><button class="btn" data-act="mo" data-n="1">Next ›</button></div><div class="card"><div class="cal">${h}</div><p class="mut">Click a date to create a task. Drag a task onto another date to reschedule. Google Calendar and Outlook sync are ready to connect under Integrations.</p></div>`}
+function renderTimeline(){const a=state.tasks.filter(t=>t.due&&t.status!=='Archived').sort((x,y)=>x.due.localeCompare(y.due));$('#main').innerHTML=head('Timeline')+(a.length?a.map(t=>`<div class="card task" data-id="${t.id}"><b style="min-width:92px">${t.due}</b><div style="flex:1"><div class="tt">${esc(t.title)}</div><div class="bar"><i style="width:${t.status==='Completed'?100:t.status==='In Progress'?50:10}%"></i></div></div></div>`).join(''):empty('⏳','Nothing scheduled yet'))}
+function renderMatrix(){const q=[['Do first','Urgent + Important'],['Schedule','Important + Not Urgent'],['Delegate','Urgent + Not Important'],['Eliminate','Not Urgent + Not Important']],po=t=>t.quad!==''&&t.quad!==undefined?+t.quad:(t.priority==='High'?(t.due&&t.due<=addD(today(),1)?0:1):(t.due&&t.due<=addD(today(),1)?2:3));
+ $('#main').innerHTML=head('Eisenhower Matrix')+`<div class="g2">`+q.map((x,i)=>`<div class="col card" data-quad="${i}"><b>${x[0]}</b><div class="mut">${x[1]}</div>${state.tasks.filter(t=>live(t)&&po(t)===i).map(t=>`<div class="card task" draggable="true" data-id="${t.id}"><div class="tt">${esc(t.title)}</div></div>`).join('')||'<div class="mut">Drop tasks here</div>'}</div>`).join('')+`</div>`}
+let pom={mode:'focus',left:1500,run:false,t:null};const PM={focus:1500,short:300,long:900};
+function renderFocus(){const p=1-pom.left/PM[pom.mode],m=Math.floor(pom.left/60),s=pom.left%60;
+ $('#main').innerHTML=head('Pomodoro & Focus')+`<div class="card" style="text-align:center;max-width:460px;margin:auto"><div class="row">${['focus','short','long'].map(k=>`<button class="btn ${pom.mode===k?'p':''}" data-act="pm" data-m="${k}">${k==='focus'?'Focus 25':k==='short'?'Break 5':'Long 15'}</button>`).join('')}</div>
+ <div class="ring" style="background:conic-gradient(var(--ac) ${p*360}deg,var(--line) 0)"><div id="pt">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div></div>
+ <div class="row"><button class="btn p" data-act="pstart">${pom.run?'Pause':(pom.left<PM[pom.mode]?'Resume':'Start')}</button><button class="btn" data-act="preset">Reset</button><button class="btn" data-act="pskip">Skip</button></div>
+ <div class="mut">Sessions completed: ${state.sessions.length} · Total focus: ${state.sessions.length*25} min</div></div>
+ <h3>Session history</h3>${state.sessions.slice(-8).reverse().map(x=>`<div class="card task">🍅 ${new Date(x).toLocaleString()} · +100 XP</div>`).join('')||empty('⏱','No focus sessions yet',false)}`}
+function pomTick(){if(!pom.run)return;pom.left--;if(pom.left<=0){pom.run=false;clearInterval(pom.t);if(pom.mode==='focus'){state.sessions.push(Date.now());addXP(100);bumpStreak();toast('Focus session complete! +100 XP','success')}else toast('Break over','info');chime();party();pom.left=PM[pom.mode];saveState();render();renderSide();return}
+ if(view==='focus'){const e=$('#pt');if(e){e.textContent=String(Math.floor(pom.left/60)).padStart(2,'0')+':'+String(pom.left%60).padStart(2,'0')}}}
+function renderHabits(){const T=today();$('#main').innerHTML=head('Habit Tracker','<button class="btn p" data-act="newhabit">+ Habit</button>')+(state.habits.length?`<div class="g2">`+state.habits.map(h=>{const best=h.best||0,wk=[...Array(7)].map((_,i)=>h.log.includes(addD(T,i-6))),pct=Math.round(h.log.filter(d=>d>=addD(T,-29)).length/30*100);return `<div class="card" data-hid="${h.id}"><b>${esc(h.name)}</b> <span class="bd">${h.freq}</span><div class="mut">🔥 ${h.streak||0} current · best ${best} · ${pct}% (30d)</div><div style="display:flex;gap:4px;margin:8px 0">${wk.map(x=>`<span style="flex:1;height:14px;border-radius:5px;background:${x?'var(--ok)':'var(--line)'}"></span>`).join('')}</div><button class="btn p" data-act="hdone">${h.log.includes(T)?'Undo today':'Mark done'}</button> <button class="btn" data-act="hedit">Edit</button> <button class="btn d" data-act="hdel">Delete</button></div>`}).join('')+`</div>`:empty('🔥','No habits created',false)+'<div class="empty"><button class="btn p" data-act="newhabit">Create habit</button></div>')}
+function habitStreak(h){let n=0,d=today();if(!h.log.includes(d))d=addD(d,-1);while(h.log.includes(d)){n++;d=addD(d,-1)}h.streak=n;h.best=Math.max(h.best||0,n)}
+function renderAchievements(){const b=lvlBase(state.level),n=lvlBase(state.level+1);$('#main').innerHTML=head('Achievements & Level')+`<div class="card" style="margin-bottom:12px"><div class="big">Level ${state.level}</div><div class="bar"><i style="width:${(state.xp-b)/(n-b)*100}%"></i></div><div class="mut">${state.xp} XP · next level at ${n} XP · streak ${state.streak} days</div><div class="mut">Task +50 · Focus session +100 · Habit +25 · Subtask +10</div></div><div class="g2">`+ACH.map(a=>{const u=state.achievements.includes(a[0]);return `<div class="card" style="opacity:${u?1:.55}"><b>${u?'🏆':'🔒'} ${a[1]}</b><div class="mut">${a[2]} · ${u?'Unlocked':'Locked'}</div></div>`}).join('')+`</div><h3>Challenges</h3><div class="g2"><div class="card">Daily: complete 3 tasks<div class="bar"><i style="width:${Math.min(100,state.tasks.filter(t=>t.completed&&ymd(t.completed)===today()).length/3*100)}%"></i></div></div><div class="card">Weekly: 3 focus sessions<div class="bar"><i style="width:${Math.min(100,state.sessions.filter(x=>x>Date.now()-7*DAY).length/3*100)}%"></i></div></div></div>`}
+function renderAnalytics(){const T=today(),a=state.tasks,mk=n=>[...Array(n)].map((_,i)=>{const d=addD(T,i-n+1);return [d.slice(5),a.filter(t=>t.completed&&ymd(t.completed)===d).length,a.filter(t=>ymd(t.created)===d).length]}),w=mk(14),mx=Math.max(1,...w.map(x=>Math.max(x[1],x[2])));
+ $('#main').innerHTML=head('Productivity Analytics')+`<div class="grid"><div class="card"><div class="mut">Score</div><div class="big">${score()}</div></div><div class="card"><div class="mut">Completed</div><div class="big">${done(state).length}</div></div><div class="card"><div class="mut">Created</div><div class="big">${a.length}</div></div><div class="card"><div class="mut">Focus min</div><div class="big">${state.sessions.length*25}</div></div><div class="card"><div class="mut">Overdue</div><div class="big">${a.filter(isOver).length}</div></div></div>
+ <div class="card"><b>Created vs completed (14 days)</b><div style="display:flex;gap:4px;align-items:flex-end;height:120px;margin-top:10px">${w.map(x=>`<div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:100%" title="${x[0]}"><i style="flex:1;background:var(--info);height:${x[2]/mx*100}%;min-height:2px"></i><i style="flex:1;background:var(--ok);height:${x[1]/mx*100}%;min-height:2px"></i></div>`).join('')}</div><div class="mut">Blue = created, green = completed</div></div>
+ <div class="card" style="margin-top:12px"><b>Weekly review</b><div>Completed this week: ${w.slice(-7).reduce((s,x)=>s+x[1],0)} · Overdue: ${a.filter(isOver).length} · Focus sessions: ${state.sessions.filter(x=>x>Date.now()-7*DAY).length} · Streak: ${state.streak}</div><div class="mut">Next week: ${coachTips()[0]}</div></div>`}
+function renderCoach(){$('#main').innerHTML=head('AI Focus Coach')+`<div class="card"><p class="mut">Runs locally in your browser using your tasks, priorities, due dates, streak and score. No external AI service is connected.</p>${coachTips().map(t=>`<div class="card" style="margin-top:8px">✨ ${t}</div>`).join('')}</div><h3>Daily planner</h3>${planDay()}<h3>Smart suggestions</h3><div class="card">${suggest()}</div>`}
+function suggest(){const a=state.tasks.filter(live),s=[];const big=a.filter(t=>!t.subtasks.length&&(t.est>=60||t.description.length>80));if(big.length)s.push(`Break down "${big[0].title}" into subtasks.`);const nd=a.filter(t=>!t.due);if(nd.length)s.push(`${nd.length} task(s) have no due date. Schedule them.`);const o=state.tasks.filter(isOver);if(o.length)s.push(`Reschedule ${o.length} overdue task(s).`);return s.map(x=>'• '+x).join('<br>')||'No suggestions right now.'}
+function renderNotifs(){const n=state.notifications;state.notifications.forEach(x=>x.read=true);saveState();renderSide();$('#main').innerHTML=head('Notifications','<button class="btn" data-act="notifperm">Enable browser alerts</button>')+(n.length?n.map(x=>`<div class="card task">🔔 ${esc(x.m)}<span class="mut" style="margin-left:auto">${new Date(x.at).toLocaleString()}</span></div>`).join(''):empty('🔔',"You're all caught up",false))}
+function renderTemplates(){const TP=[{n:'Study session',t:{title:'Study session',category:'Study',est:60,subtasks:['Review notes','Practice problems','Summarize'].map(x=>({id:uid(),title:x,done:false}))}},{n:'Work daily plan',t:{title:'Daily plan',category:'Work',subtasks:['Check inbox','Top 3 priorities','Review end of day'].map(x=>({id:uid(),title:x,done:false}))}},...state.templates];
+ $('#main').innerHTML=head('Templates')+`<div class="g2">${TP.map((x,i)=>`<div class="card"><b>${esc(x.n)}</b><div class="mut">${x.t.subtasks?.length||0} subtasks</div><button class="btn p" data-act="usetpl" data-i="${i}">Use template</button>${i>=2?` <button class="btn d" data-act="deltpl" data-i="${i-2}">Delete</button>`:''}</div>`).join('')}</div><p class="mut">To save your own, open a task and choose "Save as template".</p>`}
+function renderAuto(){const A=[['overdue','When a task becomes overdue → notify'],['xp','When a task is completed → add XP'],['sub','When all subtasks complete → complete parent task'],['recur','When a recurring task completes → create next occurrence'],['habit','When a habit is completed → update streak']];$('#main').innerHTML=head('Automations')+A.map(a=>`<label class="card task"><input type="checkbox" class="ck" checked disabled> ${a[1]}</label>`).join('')+`<p class="mut">These built-in automations are always on in this version. Custom rules are not available yet.</p>`}
+function renderInteg(){const I=['Google Calendar','Outlook','Gmail','Google Drive','Slack','GitHub','Notion','Microsoft Teams','Zapier','Webhooks','API access'];$('#main').innerHTML=head('Integrations')+`<div class="g2">${I.map(x=>`<div class="card"><b>${x}</b><div class="mut">Not connected</div><button class="btn" data-act="connect" data-n="${x}">Connect</button></div>`).join('')}</div><p class="mut">Connections need a backend with OAuth. Nothing is connected until you add one.</p>`}
+function renderSettings(){const u=state.user;$('#main').innerHTML=head('Account & Settings')+`<div class="g2"><div class="card"><b>Profile</b><p>${u?`${esc(u.name)}<br><span class="mut">${esc(u.email||'')}</span>`:'Not signed in'}</p><div class="mut">Mode: ${FB_READY?'Firebase':'Local profile (Firebase not configured)'}</div><input id="dn" placeholder="Display name" value="${esc(u?.name||'')}"><br><br><button class="btn p" data-act="savename">Save name</button> <button class="btn" data-act="logout">Log out</button></div>
+ <div class="card"><b>Appearance</b><div class="row"><select id="thm"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select><input type="color" id="acc" value="${state.settings.accent}" aria-label="Accent colour"></div><label><input type="checkbox" id="snd" ${state.settings.sound?'checked':''}> Completion sounds</label></div>
+ <div class="card"><b>Data</b><div class="row"><button class="btn" data-act="export">Export JSON</button><button class="btn" data-act="csv">Export CSV</button><button class="btn" data-act="import">Import JSON</button></div><input type="file" id="imp" accept=".json" hidden></div>
+ <div class="card"><b>Sessions & privacy</b><p class="mut">This device · active now. Device management needs Firebase Auth.</p><button class="btn d" data-act="wipe">Delete account & data</button></div></div>`;$('#thm').value=state.settings.theme}
+function render(){if(!state)return;renderSide();const v=view;({dashboard:renderDashboard,calendar:renderCalendar,timeline:renderTimeline,matrix:renderMatrix,focus:renderFocus,habits:renderHabits,achievements:renderAchievements,analytics:renderAnalytics,coach:renderCoach,planner:renderCoach,notifications:renderNotifs,templates:renderTemplates,automations:renderAuto,integrations:renderInteg,settings:renderSettings,board:()=>{lv='board';renderTasks()}}[v]||(()=>{if(v==='all'||v==='tasks'||v.startsWith('proj:')||['today','tomorrow','upcoming','overdue','completed'].includes(v)){renderTasks()}else renderDashboard()}))();updNet()}
+function renderBoard(){view='board';render()}
+function tick(){const e=$('#clock');if(e)e.textContent=new Date().toLocaleString([], {dateStyle:'full',timeStyle:'short'})}
+function updNet(){const e=$('#net');if(e)e.textContent=navigator.onLine?'🟢 Online':'🟠 Offline'}
+
+/* ===== Task modal ===== */
+function openTaskModal(id,pre={}){const t=id?state.tasks.find(x=>x.id===id):newTask(pre);edit={...t,subtasks:t.subtasks.map(s=>({...s})),tags:[...t.tags]};edit._new=!id;drawModal();$('#tm').classList.add('on');setTimeout(()=>$('#nl')?.focus(),30)}
+function closeTaskModal(){$('#tm').classList.remove('on');edit=null}
+function drawModal(){const t=edit,pct=t.subtasks.length?Math.round(t.subtasks.filter(s=>s.done).length/t.subtasks.length*100):0;
+ $('#tmBox').innerHTML=`<h2 style="margin:0 0 10px">${t._new?'New task':'Edit task'}</h2>
+ ${t._new?`<input id="nl" placeholder='Try: "Finish math assignment tomorrow at 7 PM high priority"' aria-label="Smart add"><div id="det" class="mut" style="margin:6px 0 10px"></div>`:''}
+ <input id="f_title" placeholder="Task title" value="${esc(t.title)}" aria-label="Title" style="margin-bottom:8px">
+ <textarea id="f_desc" rows="2" placeholder="Description" style="margin-bottom:8px">${esc(t.description)}</textarea><textarea id="f_notes" rows="2" placeholder="Notes" style="margin-bottom:8px">${esc(t.notes)}</textarea>
+ <div class="row"><select id="f_cat">${CATS.map(c=>`<option ${t.category===c?'selected':''}>${c}</option>`).join('')}</select><select id="f_proj"><option value="">No project</option>${state.projects.map(p=>`<option value="${p.id}" ${t.project===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><select id="f_pri">${PRI.map(c=>`<option ${t.priority===c?'selected':''}>${c}</option>`).join('')}</select><select id="f_stat">${STAT.map(c=>`<option ${t.status===c?'selected':''}>${c}</option>`).join('')}</select></div>
+ <div class="row"><input type="date" id="f_due" value="${t.due}" aria-label="Due date"><input type="time" id="f_time" value="${t.time}" aria-label="Due time"><input type="number" id="f_est" min="0" placeholder="Estimate (min)" value="${t.est||''}"><input id="f_assn" placeholder="Assignee" value="${esc(t.assignee)}"></div>
+ <div class="row"><input id="f_tags" placeholder="Tags, comma separated" value="${esc(t.tags.join(', '))}"><select id="f_rec"><option value="none">No repeat</option>${[['daily','Every day'],['weekday','Every weekday'],['weekly','Every week'],['monthly','Every month']].map(([k,l])=>`<option value="${k}" ${t.recur===k?'selected':''}>${l}</option>`).join('')}</select><input type="number" id="f_int" min="1" value="${t.interval||1}" title="Repeat interval" aria-label="Repeat interval"><select id="f_rem"><option value="">No reminder</option>${[['0','At due time'],['15','15 min before'],['60','1 hour before'],['1440','1 day before']].map(([k,l])=>`<option value="${k}" ${t.reminder===k?'selected':''}>${l}</option>`).join('')}</select></div>
+ <b>Subtasks</b> <span class="mut">${t.subtasks.filter(s=>s.done).length} / ${t.subtasks.length} completed = ${pct}%</span><div class="bar"><i style="width:${pct}%"></i></div>
+ ${t.subtasks.map((s,i)=>`<div class="row" style="flex-wrap:nowrap;align-items:center;margin:6px 0"><input type="checkbox" class="ck" data-sc="${i}" ${s.done?'checked':''} style="flex:0 0 22px;min-width:0"><input data-st="${i}" value="${esc(s.title)}"><button class="btn" data-su="${i}" style="flex:0 0 auto;min-width:0">↑</button><button class="btn" data-sd="${i}" style="flex:0 0 auto;min-width:0">↓</button><button class="btn d" data-sx="${i}" style="flex:0 0 auto;min-width:0">✕</button></div>`).join('')}
+ <div class="row"><input id="newsub" placeholder="Add subtask"><button class="btn" id="addsub" style="flex:0 0 auto">Add</button></div>
+ <div class="mut">Attachments: file uploads need storage (Firebase Storage). Not connected.</div>
+ ${!t._new&&t.comments.length?`<b>Comments</b>${t.comments.map(c=>`<div class="mut">• ${esc(c)}</div>`).join('')}`:''}
+ <div class="row" style="margin-top:12px"><button class="btn p" id="save">Save</button>${t._new?'<button class="btn" id="saveadd">Save & add another</button>':'<button class="btn" id="dupT">Duplicate</button><button class="btn" id="tplT">Save as template</button>'}<button class="btn" id="cancel">Cancel</button></div>`}
+function readForm(){const t=edit,v=i=>$('#'+i).value;t.title=v('f_title').trim();t.description=v('f_desc');t.notes=v('f_notes');t.category=v('f_cat');t.project=v('f_proj');t.priority=v('f_pri');t.status=v('f_stat');t.due=v('f_due');t.time=v('f_time');t.est=+v('f_est')||0;t.assignee=v('f_assn');t.tags=v('f_tags').split(',').map(x=>x.trim()).filter(Boolean);t.recur=v('f_rec');t.interval=+v('f_int')||1;t.reminder=v('f_rem');document.querySelectorAll('[data-st]').forEach(e=>t.subtasks[+e.dataset.st].title=e.value)}
+function saveTask(again){readForm();const t=edit;if(!t.title){toast('Enter a task title','error');return}t.updated=Date.now();if(t.status==='Completed'&&!t.completed)t.completed=Date.now();const n=t._new;delete t._new;
+ if(n)state.tasks.push(t);else state.tasks[state.tasks.findIndex(x=>x.id===t.id)]=t;log((n?'Created "':'Updated "')+t.title+'"');saveState();toast(n?'Task created':'Task saved','success');closeTaskModal();render();if(again)openTaskModal()}
+
+/* ===== Export / import ===== */
+function exportData(){const b=new Blob([JSON.stringify({app:'TaskMaster Pro',version:1,exported:new Date().toISOString(),state},null,2)],{type:'application/json'});dl(b,'taskmaster-backup-'+today()+'.json');toast('Backup exported','success')}
+function dl(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function exportCSV(){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';dl(new Blob([['title,category,project,priority,status,due,time,tags'].concat(state.tasks.map(t=>[t.title,t.category,projName(t.project),t.priority,t.status,t.due,t.time,t.tags.join(';')].map(q).join(','))).join('\n')],{type:'text/csv'}),'tasks.csv');toast('CSV exported','success')}
+function importData(file){const r=new FileReader();r.onload=()=>{try{const j=JSON.parse(r.result);state={...fresh(),...(j.state||j),user:state.user};saveState();render();toast('Data imported','success')}catch(e){toast('That file is not a valid backup','error')}};r.readAsText(file)}
+
+/* ===== Auth (Firebase-ready; local profile fallback stores NO password) ===== */
+function drawAuth(mode='in'){const t={in:'Log in',up:'Create account',reset:'Reset password'}[mode];$('#authBox').innerHTML=`<h2 style="margin:0">TaskMaster Pro</h2><p class="mut">${FB_READY?'Sign in to sync across devices.':'Firebase is not configured yet. Add your firebaseConfig in the code to enable real accounts and sync. Until then you can continue with a local profile on this device.'}</p><h3>${t}</h3>
+ ${mode==='up'?'<input id="au_n" placeholder="Display name" style="margin-bottom:8px">':''}<input id="au_e" type="email" placeholder="Email" style="margin-bottom:8px" autocomplete="email">${mode!=='reset'?'<input id="au_p" type="password" placeholder="Password" style="margin-bottom:8px" autocomplete="current-password">':''}
+ <label class="mut"><input type="checkbox" id="au_r" checked> Remember me</label><div class="row" style="margin-top:10px"><button class="btn p" id="au_go">${t}</button>${mode!=='reset'?'<button class="btn" id="au_g">Continue with Google</button>':''}</div>
+ <div class="row"><button class="btn" data-am="${mode==='in'?'up':'in'}">${mode==='in'?'Create account':'Have an account? Log in'}</button><button class="btn" data-am="reset">Forgot password</button></div><button class="btn" id="au_l" style="width:100%">Continue with local profile</button>`}
+const Auth={async go(mode){const e=$('#au_e').value.trim(),p=$('#au_p')?.value;if(!FB_READY)return toast('Add your Firebase config to use '+(mode==='reset'?'password reset':'email accounts'),'warning');
+ /* firebase.auth().signInWithEmailAndPassword(e,p) / createUserWithEmailAndPassword + sendEmailVerification / sendPasswordResetEmail(e) */},
+ google(){if(!FB_READY)return toast('Add your Firebase config to enable Google sign-in','warning')/* firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()) */},
+ local(){state.user={name:state.user?.name||'Guest',email:'',local:true};saveState();$('#auth').classList.remove('on');$('#app').hidden=false;render();toast('Using a local profile on this device','info')}};
+
+/* ===== Command palette ===== */
+const CMDS=[['Create Task',()=>openTaskModal()],['Search',()=>$('#gs')?.focus()],['Dashboard',()=>go('dashboard')],['Today',()=>go('today')],['Upcoming',()=>go('upcoming')],['Overdue',()=>go('overdue')],['Calendar',()=>go('calendar')],['Board',()=>{lv='board';go('all')}],['Focus',()=>go('focus')],['Habits',()=>go('habits')],['AI Coach',()=>go('coach')],['Achievements',()=>go('achievements')],['Analytics',()=>go('analytics')],['Toggle Theme',()=>toggleTheme()],['Export Data',exportData],['Import Data',()=>{go('settings');toast('Use Import JSON here')}]];
+function openPal(){$('#pal').classList.add('on');$('#pq').value='';palList('');$('#pq').focus()}
+function palList(q){$('#pl').innerHTML=CMDS.map((c,i)=>[c,i]).filter(([c])=>c[0].toLowerCase().includes(q.toLowerCase())).map(([c,i],k)=>`<button class="pi ${k?'':'on'}" data-cmd="${i}">${c[0]}</button>`).join('')}
+function go(v){view=v;sel.clear();$('#side').classList.remove('open');render();$('#main').scrollTo(0,0)}
+function toggleTheme(){const d=getComputedStyle(document.body).backgroundColor,dark=d.match(/\d+/g)[0]<100;state.settings.theme=dark?'light':'dark';applyTheme();saveState()}
+function applyTheme(){const r=document.documentElement;state.settings.theme==='system'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',state.settings.theme);r.style.setProperty('--ac',state.settings.accent)}
+
+/* ===== Events (delegated) ===== */
+document.addEventListener('click',e=>{const T=e.target,c=s=>T.closest(s);
+ if(c('#au_go'))return Auth.go($('#authBox h3').textContent.startsWith('Create')?'up':$('#authBox h3').textContent.startsWith('Reset')?'reset':'in');
+ if(c('#au_g'))return Auth.google();if(c('#au_l'))return Auth.local();if(c('[data-am]'))return drawAuth(c('[data-am]').dataset.am);
+ if(c('[data-cmd]')){$('#pal').classList.remove('on');return CMDS[+c('[data-cmd]').dataset.cmd][1]()}if(T.id==='pal'||T.id==='tm'&&false){$('#pal').classList.remove('on')}
+ const nv=c('[data-nav]');if(nv){if(nv.dataset.nav==='menu'){$('#side').classList.toggle('open');return}if(nv.dataset.nav==='board'){lv='board';return go('all')}if(nv.dataset.nav==='all'){lv='list'}return go(nv.dataset.nav)}
+ if(c('#col'))return $('#side').classList.toggle('c');if(c('#fab'))return openTaskModal();
+ if(c('#newProj')){const n=prompt('Project name');if(n){state.projects.push({id:uid(),name:n,color:'#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0')});saveState();render();toast('Project created','success')}return}
+ if(c('#save'))return saveTask(false);if(c('#saveadd'))return saveTask(true);if(c('#cancel'))return closeTaskModal();
+ if(c('#dupT')){const i=edit.id;closeTaskModal();return duplicateTask(i)}
+ if(c('#tplT')){readForm();state.templates.push({n:edit.title||'Template',t:{...edit,id:undefined,due:'',subtasks:edit.subtasks.map(s=>({...s,done:false,id:uid()}))}});saveState();return toast('Template saved','success')}
+ if(c('#addsub')){readForm();const v=$('#newsub').value.trim();if(v){edit.subtasks.push({id:uid(),title:v,done:false});drawModal();$('#newsub').focus()}return}
+ if(T.dataset.su!==undefined){readForm();const i=+T.dataset.su;if(i>0)[edit.subtasks[i-1],edit.subtasks[i]]=[edit.subtasks[i],edit.subtasks[i-1]];return drawModal()}
+ if(T.dataset.sd!==undefined){readForm();const i=+T.dataset.sd,s=edit.subtasks;if(i<s.length-1)[s[i+1],s[i]]=[s[i],s[i+1]];return drawModal()}
+ if(T.dataset.sx!==undefined){readForm();edit.subtasks.splice(+T.dataset.sx,1);return drawModal()}
+ const a=c('[data-act]');if(a)act(a,c('[data-id]'),e);
+ const dt=c('.cal .d');if(dt&&!c('.ev'))openTaskModal(null,{due:dt.dataset.date});else if(c('.ev'))openTaskModal(c('.ev').dataset.id)});
+function act(a,card,e){const id=card?.dataset.id,k=a.dataset.act,tk=id&&state.tasks.find(x=>x.id===id);
+ const M={new:()=>openTaskModal(),theme:toggleTheme,menu:()=>$('#side').classList.toggle('open'),done:()=>completeTask(id),edit:()=>openTaskModal(id),star:()=>{tk.starred=!tk.starred;saveState();render()},clearf:()=>{filter={q:'',f:'all',sort:'due',cat:'',proj:''};render()},
+ lv:()=>{lv=a.dataset.v;render()},selall:()=>{visible().forEach(t=>sel.add(t.id));render()},mo:()=>{const d=new Date(cur?.m||Date.now());d.setMonth(d.getMonth()+ +a.dataset.n);cur={m:d.getTime()};render()},
+ sel:()=>{sel.has(id)?sel.delete(id):sel.add(id);render()},
+ bulk:()=>bulk(a.dataset.b),pm:()=>{clearInterval(pom.t);pom={mode:a.dataset.m,left:PM[a.dataset.m],run:false,t:null};render()},
+ pstart:()=>{if(pom.run){pom.run=false;clearInterval(pom.t)}else{pom.run=true;pom.t=setInterval(pomTick,1000)}render()},preset:()=>{clearInterval(pom.t);pom.run=false;pom.left=PM[pom.mode];render()},pskip:()=>{clearInterval(pom.t);pom.run=false;pom.mode=pom.mode==='focus'?'short':'focus';pom.left=PM[pom.mode];render()},
+ newhabit:()=>{const n=prompt('Habit name');if(!n)return;const f=confirm('OK = daily, Cancel = weekly')?'Daily':'Weekly';state.habits.push({id:uid(),name:n,freq:f,log:[],streak:0,best:0});saveState();render();checkAch();toast('Habit created','success')},
+ hdone:()=>{const h=state.habits.find(x=>x.id===a.closest('[data-hid]').dataset.hid),T=today();if(h.log.includes(T))h.log=h.log.filter(d=>d!==T);else{h.log.push(T);addXP(25);bumpStreak();chime();toast('Habit done! +25 XP','success')}habitStreak(h);saveState();render()},
+ hedit:()=>{const h=state.habits.find(x=>x.id===a.closest('[data-hid]').dataset.hid),n=prompt('Habit name',h.name);if(n){h.name=n;saveState();render()}},
+ hdel:()=>{if(confirm('Delete habit?')){state.habits=state.habits.filter(x=>x.id!==a.closest('[data-hid]').dataset.hid);saveState();render()}},
+ notifperm:()=>{if(!('Notification' in window))return toast('Not supported in this browser','warning');Notification.requestPermission().then(p=>toast('Browser alerts: '+p))},
+ usetpl:()=>{const L=document.querySelectorAll('[data-act=usetpl]');const TP=[...document.querySelectorAll('.card b')].length;const all=[{t:{title:'Study session',category:'Study',est:60,subtasks:['Review notes','Practice problems','Summarize'].map(x=>({id:uid(),title:x,done:false}))}},{t:{title:'Daily plan',category:'Work',subtasks:['Check inbox','Top 3 priorities','Review end of day'].map(x=>({id:uid(),title:x,done:false}))}},...state.templates];openTaskModal(null,{...all[+a.dataset.i].t,subtasks:(all[+a.dataset.i].t.subtasks||[]).map(s=>({...s,id:uid()}))})},
+ deltpl:()=>{state.templates.splice(+a.dataset.i,1);saveState();render()},connect:()=>toast(a.dataset.n+' needs a backend with OAuth. Not connected yet.','warning'),
+ savename:()=>{state.user.name=$('#dn').value||state.user.name;saveState();render();toast('Profile saved','success')},logout:()=>{if(!FB_READY){state.user=null;saveState()}$('#app').hidden=true;$('#auth').classList.add('on');drawAuth();toast('Logged out')},
+ export:exportData,csv:exportCSV,import:()=>$('#imp').click(),wipe:()=>{if(confirm('Delete ALL data on this device?')){localStorage.removeItem('tmp_state');state=fresh();location.reload()}}};
+ (M[k]||(()=>{}))()}
+function bulk(b){const ids=[...sel];ids.forEach(id=>{const t=state.tasks.find(x=>x.id===id);if(!t)return;if(b==='complete'&&t.status!=='Completed'){t.status='Completed';t.completed=Date.now();addXP(50)}if(b==='archive')t.status='Archived';if(b==='restore'){t.status='Pending';t.completed=null}});if(b==='delete'){if(!confirm('Delete '+ids.length+' tasks?'))return;state.tasks=state.tasks.filter(t=>!sel.has(t.id))}if(b!=='clearsel'&&b!=='delete')chime();sel.clear();saveState();render();toast('Bulk action applied','success')}
+document.addEventListener('change',e=>{const T=e.target,id=T.closest('[data-id]')?.dataset.id;
+ if(T.dataset.act==='done')return completeTask(id);if(T.dataset.act==='sel')return act(T,T.closest('[data-id]'));
+ if(T.dataset.act==='menu2'){const v=T.value;T.value='';const M={dup:duplicateTask,archive:archiveTask,restore:restoreTask,snooze:snooze,timer:toggleTimer,del:deleteTask,comment:i=>{const c=prompt('Comment');if(c){state.tasks.find(x=>x.id===i).comments.push(c);saveState();toast('Comment added','success')}}};return M[v]&&M[v](id)}
+ if(T.dataset.act==='bulkp'&&T.value){sel.forEach(i=>state.tasks.find(x=>x.id===i).priority=T.value);saveState();render();return toast('Priority updated','success')}
+ if(T.dataset.act==='bulkc'&&T.value){sel.forEach(i=>state.tasks.find(x=>x.id===i).category=T.value);saveState();render();return toast('Category updated','success')}
+ if(T.dataset.act==='bulkd'&&T.value){sel.forEach(i=>state.tasks.find(x=>x.id===i).due=T.value);saveState();render();return toast('Due date updated','success')}
+ if(T.id==='ff'){filter.f=T.value;render()}if(T.id==='fc'){filter.cat=T.value;render()}if(T.id==='fp'){filter.proj=T.value;render()}if(T.id==='fs'){filter.sort=T.value;render()}
+ if(T.dataset.sc!==undefined&&edit){readForm();const s=edit.subtasks[+T.dataset.sc];s.done=T.checked;if(T.checked){addXP(10);chime()}drawModal();return}
+ if(T.id==='thm'){state.settings.theme=T.value;applyTheme();saveState()}if(T.id==='acc'){state.settings.accent=T.value;applyTheme();saveState()}if(T.id==='snd'){state.settings.sound=T.checked;saveState()}
+ if(T.id==='imp'&&T.files[0])importData(T.files[0])});
+let deb;document.addEventListener('input',e=>{const T=e.target;
+ if(T.id==='gs'){clearTimeout(deb);deb=setTimeout(()=>{filter.q=T.value;if(!['all','today','tomorrow','upcoming','overdue','completed'].includes(view)&&!view.startsWith('proj:')){view='all'}render();const g=$('#gs');g.focus();g.setSelectionRange(g.value.length,g.value.length)},180)}
+ if(T.id==='pq')palList(T.value);
+ if(T.id==='nl'){const o=parseNL(T.value);$('#det').innerHTML=T.value?`Detected: <b>${esc(o.title||'…')}</b>${o.due?' · '+o.due:''}${o.time?' · '+o.time:''}${o.priority?' · '+o.priority:''}${o.category?' · '+o.category:''}`:'';}});
+document.addEventListener('keydown',e=>{const inp=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+ if(e.key==='Enter'&&e.target.id==='nl'){const o=parseNL(e.target.value);Object.assign(edit,o);edit.title=o.title;drawModal();$('#f_title').focus();return}
+ if(e.key==='Enter'&&e.target.id==='newsub'){$('#addsub').click();return}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();return openPal()}
+ if(e.key==='Escape'){closeTaskModal();$('#pal').classList.remove('on');return}
+ if(e.key==='Enter'&&$('#pal').classList.contains('on')){const b=$('.pi');if(b)b.click();return}
+ if(inp||$('#tm').classList.contains('on')||!state?.user)return;
+ const card=document.activeElement.closest?.('[data-id]'),id=card?.dataset.id;
+ if(e.key==='n')return(e.preventDefault(),openTaskModal());if(e.key==='/'){e.preventDefault();return $('#gs')?.focus()}
+ if(id&&e.key===' '){e.preventDefault();completeTask(id)}if(id&&e.key==='e')openTaskModal(id);if(id&&e.key==='Delete')deleteTask(id)});
+/* Drag & drop: board columns, calendar dates, matrix quadrants */
+let drag=null;document.addEventListener('dragstart',e=>{const c=e.target.closest?.('[data-id]');if(c){drag=c.dataset.id;e.dataTransfer.setData('text/plain',drag)}});
+document.addEventListener('dragover',e=>{if(e.target.closest?.('[data-drop],.cal .d,[data-quad]'))e.preventDefault()});
+document.addEventListener('drop',e=>{const t=state.tasks.find(x=>x.id===drag);if(!t)return;const c=e.target.closest('[data-drop]'),d=e.target.closest('.cal .d'),q=e.target.closest('[data-quad]');
+ if(c){t.status=c.dataset.drop;if(t.status==='Completed'){t.completed=Date.now();addXP(50);chime()}}else if(d){t.due=d.dataset.date;toast('Rescheduled to '+t.due,'success')}else if(q){t.quad=q.dataset.quad}else return;e.preventDefault();t.updated=Date.now();saveState();render();drag=null});
+addEventListener('online',()=>{updNet();toast('Back online','success')});addEventListener('offline',()=>{updNet();toast('You are offline. Changes stay on this device.','warning')});
+/* PWA install architecture (manifest + service worker need separate files; standalone use is unaffected) */
+let installEv;addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e});
+
+/* Reminders & overdue check */
+function checkReminders(){const now=Date.now();state.tasks.filter(live).forEach(t=>{if(!t.due)return;const due=new Date(t.due+'T'+(t.time||'09:00')).getTime(),lead=t.reminder===''?null:+t.reminder*60000;
+ if(isOver(t)&&!t._ov){t._ov=1;notify('Overdue: '+t.title)}if(lead!==null&&!t._rm&&now>=due-lead&&now<due+36e5){t._rm=1;notify('Reminder: '+t.title);toast('Reminder: '+t.title,'warning');if('Notification' in window&&Notification.permission==='granted')new Notification('TaskMaster Pro',{body:t.title})}});renderSide()}
+
+/* ===== Boot ===== */
+loadState();applyTheme();
+if(state.user){$('#auth').classList.remove('on');$('#app').hidden=false}else drawAuth();
+$('#main').innerHTML='<div class="card"><div class="bar"><i style="width:60%"></i></div></div>';
+render();setInterval(tick,30000);setInterval(checkReminders,60000);setTimeout(checkReminders,1500);
+</script></body></html>
